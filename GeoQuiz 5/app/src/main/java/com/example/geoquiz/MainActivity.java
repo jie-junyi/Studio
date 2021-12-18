@@ -2,6 +2,8 @@ package com.example.geoquiz;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -14,14 +16,16 @@ public class MainActivity extends AppCompatActivity {
     //声明部分
     private static final String TAG="MainActivity";//定义一个常量，日志来源
     private static final String KEY_INDEX="index";//定义一个键
-    private static final String KEY_ANSWER="KEY_ANSWER";
+    private static final String KEY_ANSWER="answer";
+    private static final String KEY_CHEATER="cheat";
+    private static final int REQUEST_CODE_CHEAT = 0;//定义请求代码
     private Button mTureButton;//变量名，用来接收视图对象的
     private Button mFalseButton;//两个大写的，？？？命名错误会显示绿色
+    private Button mCheatButton;
     private Button mNextButton;
     private Button mLastButton;
     private TextView mQuestionTextView;
 
-    //实例化Question数组对象
     private Question[] mQuestionBank = new Question[] {
             new Question(R.string.question_australia, true),
             new Question(R.string.question_oceans, true),
@@ -31,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
             new Question(R.string.question_asia, true)
     };//显式的构造了对象。
     private int mCurrentIndex = 0;
+    private boolean [] mIsCheater=new boolean [mQuestionBank.length];
 
     @Override//注释，编译器里面要有这个方法，可以帮忙检查方法名是否错误
     protected void onCreate(Bundle savedInstanceState) {//里面写控制器
@@ -38,14 +43,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //onCreate中使用保存好的数据
-        if(savedInstanceState!=null){
-            mCurrentIndex=savedInstanceState.getInt(KEY_INDEX,0);//0是什么意思？？？，是mCurrentIndex的现有值？？？
-            boolean[] answerList=savedInstanceState.getBooleanArray(KEY_ANSWER);
+        if(savedInstanceState!=null) {
+            mCurrentIndex = savedInstanceState.getInt(KEY_INDEX, 0);//0是什么意思？？？，是mCurrentIndex的现有值？？？
+            mIsCheater=savedInstanceState.getBooleanArray(KEY_CHEATER);
+            boolean[]answerList=savedInstanceState.getBooleanArray(KEY_ANSWER);
             for(int i=0;i<mQuestionBank.length;i++){
-                mQuestionBank[i].setIsAnswered(answerList[i]);//将答题情况存储在question中
+                mQuestionBank[i].setAnswer(answerList[i]);
             }
         }
+
 
         //view questions
         mQuestionTextView=(TextView) findViewById(R.id.question_text_view);
@@ -77,6 +83,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //cheat
+        mCheatButton=(Button) findViewById(R.id.cheat_button);
+        mCheatButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Intent intent=new Intent(MainActivity.this,CheatActivity.class);//实例intent对象
+                boolean answerIsTure=mQuestionBank[mCurrentIndex].isAnswerTure();
+                Intent intent=CheatActivity.newIntent(MainActivity.this,answerIsTure);//封装
+                //startActivity(intent);
+                startActivityForResult(intent,REQUEST_CODE_CHEAT);
+            }
+        });
+
         //next
         mNextButton=(Button) findViewById(R.id.next_button);
         mNextButton.setOnClickListener(new View.OnClickListener() {
@@ -84,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 mCurrentIndex++;//加一就好
                 updateQuestion();
-                ButtonEnabled();//之所以不在update里面写，不知道为什么会闪退
+                ButtonEnabled();
             }
         });
 
@@ -128,43 +147,56 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState){//系统会在onStop之前调用该方法
         super.onSaveInstanceState(savedInstanceState);
-        Log.d(TAG,"onSaveInstanceState() called");
+        Log.d(TAG,"saveInstanceState");
         savedInstanceState.putInt(KEY_INDEX,mCurrentIndex);
-
-        boolean[] answerList=new boolean[mQuestionBank.length];//存储是否已经答过该题的情况
-        for(int i=0;i<answerList.length;i++){
-            answerList[i]=mQuestionBank[i].IsAnswered();
+        savedInstanceState.putBooleanArray(KEY_CHEATER,mIsCheater);
+        boolean []answerList=new boolean[mQuestionBank.length];
+        for(int i=0;i<mQuestionBank.length;i++){
+            answerList[i]=mQuestionBank[i].isAnswer();
         }
         savedInstanceState.putBooleanArray(KEY_ANSWER,answerList);
     }
+   @Override
+   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+       super.onActivityResult(requestCode, resultCode, data);//要有父亲
+       if (resultCode != Activity.RESULT_OK) {
+           return;
+       }
+       if (requestCode == REQUEST_CODE_CHEAT) {
+           if (data == null) {
+               return;
+           }
+           mIsCheater[mCurrentIndex] = CheatActivity.wasAnswerShown(data);//关键
+       }
+   }
+
 
 
     //问题显式
     private void updateQuestion(){//公共代码部分，用一个方法写。
         int question=mQuestionBank[mCurrentIndex].getTextResId();//得到ID，
         mQuestionTextView.setText(question);//把id传入setText中
-
+        //很奇怪，为什么在这里写ButtonEnabled()会出问题;
     }
-    //更新逻辑判断，监听器,再多一个逻辑问题，答对则不可以继续答题//
-    //还可以有另一种思路，就是回答了不管对错都不可以回答！
+    //更新逻辑判断，监听器
     private void CheckAnswer(boolean userPressTure){
         boolean answerIsTure=mQuestionBank[mCurrentIndex].isAnswerTure();
         int messageResId=0;
-        if(userPressTure==answerIsTure) {
+        if(mIsCheater[mCurrentIndex]){
+            messageResId=(R.string.judgment_toast);
+        }
+        else if (userPressTure==answerIsTure) {
             messageResId = R.string.correct_toast;
-            mQuestionBank[mCurrentIndex].setIsAnswered(true);
-            ButtonEnabled();
         }
-        else {
-            messageResId = R.string.incorrect_toast;
-            mQuestionBank[mCurrentIndex].setIsAnswered(false);
-            ButtonEnabled();
-        }
+        else messageResId=R.string.incorrect_toast;
+        mQuestionBank[mCurrentIndex].setAnswer(true);
         Toast.makeText(this,messageResId,Toast.LENGTH_SHORT).show();
+        ButtonEnabled();
+
     }
-    //ButtonEnabled,在两个地方使用！！！
+
     public void ButtonEnabled(){//setEnabled()方法？？？？，
-        if(mQuestionBank[mCurrentIndex].IsAnswered()){
+        if(mQuestionBank[mCurrentIndex].isAnswer()){
             mTureButton.setEnabled(false);
             mFalseButton.setEnabled(false);
         }else{
@@ -172,4 +204,5 @@ public class MainActivity extends AppCompatActivity {
             mFalseButton.setEnabled(true);
         }
     }
+
 }

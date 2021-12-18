@@ -3,7 +3,7 @@ package com.example.geoquiz;
 public class Question {
     private int mTextResId;//Resid竟然不行
     private boolean mAnswerTure;
-    private boolean  mAnswered;
+    private boolean mIsAnswer;
 
     public Question(int textResId, boolean answerTrue){
         mTextResId=textResId;
@@ -26,12 +26,12 @@ public class Question {
         mTextResId = textResId;
     }
 
-    public boolean IsAnswered() {
-        return mAnswered;
+    public boolean isAnswer() {
+        return mIsAnswer;
     }
 
-    public void setIsAnswered(boolean isAnswered) {
-        this.mAnswered = isAnswered;
+    public void setAnswer(boolean answer) {
+        mIsAnswer = answer;
     }
 }
 

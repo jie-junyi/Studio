@@ -6,6 +6,7 @@ import android.animation.Animator; //
 import android.animation.AnimatorListenerAdapter; //
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;    //
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewAnimationUtils; //
@@ -22,12 +23,20 @@ public class CheatActivity extends AppCompatActivity {
 
     private TextView mTextView;
     private Button mShowButton;
+    private TextView mTextView2;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cheat);
 
+        //显示API
+        mTextView2=(TextView) findViewById(R.id.show_apl_level);
+        CharSequence cs = "API Level " + Build.VERSION.SDK_INT;
+        mTextView2.setText(cs);
+
+        //接收保存的数据
         if(savedInstanceState!=null) {
             mCheatState = savedInstanceState.getBoolean(KEY_SHOWN, false);
         }
@@ -48,7 +57,6 @@ public class CheatActivity extends AppCompatActivity {
                 else
                     mTextView.setText(R.string.false_button);
                 setAnswerShownResult(true);
-
                 //
                 int cx = mShowButton.getWidth() / 2;
                 int cy = mShowButton.getHeight() / 2;
@@ -67,27 +75,27 @@ public class CheatActivity extends AppCompatActivity {
             }
         });
     }
+    //保存数据
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState){
         super.onSaveInstanceState(savedInstanceState);
         savedInstanceState.putBoolean(KEY_SHOWN,mCheatState);
     }
 
+    //从父亲传入的方法，写在儿子中
     public static Intent newIntent(Context packageContext, boolean answerIsTure){
         Intent intent=new Intent(packageContext,CheatActivity.class);
-        intent.putExtra(EXTRA_ANSWER_IS_TRUE,answerIsTure);//可以写多个extra
+        intent.putExtra(EXTRA_ANSWER_IS_TRUE,answerIsTure);//Extra可以携带信息，可以写多个extra
         //键在CheatActivity中
         return intent;
     }
+    //传信息给父亲的方法，自己用
     private void setAnswerShownResult(boolean isAnswerShown){
         Intent date=new Intent();
         date.putExtra(EXTRA_ANSWER_SHOWN,isAnswerShown);
-        setResult(RESULT_OK,date);//结果代码，RESULT_OK
+        setResult(RESULT_OK,date);//传入Intent对象和结果代码，RESULT_OK给父亲
     }
-   // public boolean wasAnswerShown(Intent result){!!!
-        //return result.getBooleanExtra(EXTRA_ANSWER_SHOWN,false);
-   // }
-    //静态的！！！
+    //父用来获取extra信息，因为定义的extra在子类中
     public static boolean wasAnswerShown(Intent result) {
         return result.getBooleanExtra(EXTRA_ANSWER_SHOWN, false);//返回值
     }

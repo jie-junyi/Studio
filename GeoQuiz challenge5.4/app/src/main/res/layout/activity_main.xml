@@ -58,5 +58,5 @@
         android:layout_height="wrap_content"
         android:id="@+id/Several"
         android:padding="14dp"
-        tools:text="severals"/>
+        android:text=""/>
 </LinearLayout>

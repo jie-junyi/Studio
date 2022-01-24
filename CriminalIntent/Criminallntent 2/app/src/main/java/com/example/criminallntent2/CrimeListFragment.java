@@ -75,7 +75,11 @@ public class CrimeListFragment extends Fragment {
             //getActivity是什么？？？---Context对象
             //CrimeListFragment是通过使用getActivity()方法传
             //入它的托管activity来满足的
-            Intent intent = new Intent(getActivity(), CrimeActivity.class);
+//            Toast.makeText(getActivity(),
+//                    mCrime.getTitle() + " clicked!", Toast.LENGTH_SHORT)
+//                    .show();
+//            Intent intent = new Intent(getActivity(), CrimeActivity.class);
+            Intent intent=CrimeActivity.newIntent(getActivity(),mCrime.getId());
             startActivity(intent);
         }
     }

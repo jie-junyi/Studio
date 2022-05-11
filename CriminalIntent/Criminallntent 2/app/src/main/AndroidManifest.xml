@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Criminallntent2">
         <activity
-            android:name=".CrimeListActivity"
+            android:name=".CrimeLab.CrimeListActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -19,8 +19,11 @@
             </intent-filter>
         </activity>
         <!--一定要有，不然CrimeActivity打不开-->
-        <activity
-            android:name=".CrimeActivity">
+        <activity android:name=".Crime.View.CrimeActivity">
+
+        </activity>
+        <activity android:name=".Crime.View.CrimePagerActivity">
+
         </activity>
 
     </application>
